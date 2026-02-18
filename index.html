@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Исправление ошибок в Python</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #e6f7ff; /* Светло-голубой фон */
+            color: #0a192f; /* Темно-синий текст */
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode {
+            background-color: #0a192f; /* Темно-синий фон */
+            color: #e6f1ff; /* Светло-голубой текст */
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #66b3ff;
+            border-radius: 4px;
+            font-family: monospace;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode textarea {
+            background-color: #1a2d4d;
+            color: #e6f1ff;
+            border-color: #3366cc;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .dark-mode button {
+            background-color: #006400;
+        }
+        .dark-mode button:hover {
+            background-color: #004d00;
+        }
+        .result-box {
+            padding: 10px;
+            border: 1px solid #66b3ff;
+            border-radius: 4px;
+            min-height: 100px;
+            background-color: #f0f8ff;
+            white-space: pre-wrap;
+        }
+        .dark-mode .result-box {
+            background-color: #1a2d4d;
+            border-color: #3366cc;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #0a192f;
+        }
+        .dark-mode h1 {
+            color: #e6f1ff;
+        }
+        .fix-options {
+            margin-bottom: 10px;
+        }
+        .fix-option {
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #66b3ff;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .fix-option:hover {
+            background-color: #e6f1ff;
+        }
+        .dark-mode .fix-option {
+            border-color: #3366cc;
+        }
+        .dark-mode .fix-option:hover {
+            background-color: #2a4d7d;
+        }
+        .theme-toggle {
+            background-color: #2196F3;
+        }
+        .dark-mode .theme-toggle {
+            background-color: #1976D2;
+        }
+        .dark-mode .theme-toggle:hover {
+            background-color: #1565C0;
+        }
+        .input-section, .output-section {
+            margin-top: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #0a192f;
+        }
+        .dark-mode label {
+            color: #e6f1ff;
+        }
+        
+        /* Уменьшаем размер поля ввода */
+        #input-data {
+            height: 70px !important;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">Переключить тему</button>
+    <h1>Исправление ошибок в Python</h1>
+    
+    <div class="input-section">
+        <h2>Исправление ошибок в коде Python</h2>
+        <p>Напишите код и нажмите «Получить варианты»:</p>
+        <textarea id="code-input">1</textarea>
+        <div>
+            <button onclick="getFixes()">Получить варианты исправления</button>
+            <button onclick="runCode()">Запустить код</button>
+        </div>
+    </div>
+
+    <div class="fix-options" id="fix-options">
+        <h3>Результат:</h3>
+        <p>Выберите вариант выше</p>
+    </div>
+
+    <div class="input-section">
+        <h3>Ввод данных (если есть input()):</h3>
+        <textarea id="input-data" rows="2"></textarea>
+    </div>
+
+    <div class="output-section">
+        <h3>Вывод программы:</h3>
+        <div class="result-box" id="output-result">Вывод программы:</div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        // Проверяем сохраненную тему
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        async function getFixes() {
+            const code = document.getElementById('code-input').value;
+            const response = await fetch('/get-fixes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ code: code })
+            });
+            
+            const data = await response.json();
+            displayFixOptions(data.fixes);
+        }
+
+        function displayFixOptions(fixes) {
+            const container = document.getElementById('fix-options');
+            container.innerHTML = '<h3>Варианты исправления:</h3>';
+            
+            if (fixes.length === 0) {
+                container.innerHTML += '<p>Не найдено вариантов исправления</p>';
+                return;
+            }
+            
+            fixes.forEach((fix, index) => {
+                const option = document.createElement('div');
+                option.className = 'fix-option';
+                option.innerHTML = `<strong>Вариант ${index + 1}:</strong> ${fix.label}`;
+                option.onclick = () => applyFix(fix.code);
+                container.appendChild(option);
+            });
+        }
+
+        function applyFix(code) {
+            // Основное исправление: проверяем наличие редактора CodeMirror
+            if (window.pythonEditor) {
+                window.pythonEditor.setValue(code);
+                // Также обновляем скрытое текстовое поле
+                const textarea = document.getElementById('code-input');
+                if (textarea) textarea.value = code;
+            } else {
+                document.getElementById('code-input').value = code;
+            }
+        }
+
+        async function runCode() {
+            const code = document.getElementById('code-input').value;
+            const input = document.getElementById('input-data').value;
+            
+            const response = await fetch('/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ code: code, input: input })
+            });
+            
+            const data = await response.json();
+            const resultElement = document.getElementById('output-result');
+            
+            if (data.error) {
+                resultElement.textContent = 'Ошибка: ' + data.error;
+            } else {
+                resultElement.textContent = data.output || 'Программа выполнена без вывода';
+            }
+        }
+    </script>
+
+    <!-- Добавляем стили и скрипты CodeMirror для автодополнения -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/python-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js"></script>
+
+    <style>
+        .cm-editor {
+            border: 1px solid #66b3ff;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            height: 200px;
+            font-family: monospace;
+        }
+        .dark-mode .cm-editor {
+            border-color: #3366cc;
+        }
+        .CodeMirror {
+            height: 100%;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Находим исходное текстовое поле для кода
+            const textarea = document.getElementById('code-input');
+            if (!textarea) return;
+            
+            // Сохраняем оригинальные стили и атрибуты
+            const originalStyle = textarea.getAttribute('style') || '';
+            const originalClass = textarea.getAttribute('class') || '';
+            
+            // Создаем обертку для редактора
+            const wrapper = document.createElement('div');
+            wrapper.className = 'cm-editor ' + originalClass;
+            wrapper.style.cssText = originalStyle;
+            
+            // Вставляем обертку перед текстовым полем
+            textarea.parentNode.insertBefore(wrapper, textarea);
+            // Перемещаем текстовое поле внутрь обертки
+            wrapper.appendChild(textarea);
+            
+            // Инициализируем CodeMirror
+            const editor = CodeMirror(function(elt) {
+                wrapper.insertBefore(elt, textarea);
+                textarea.style.display = 'none';
+            }, {
+                value: textarea.value,
+                mode: "python",
+                theme: document.body.classList.contains('dark-mode') ? 'dracula' : 'default',
+                lineNumbers: true,
+                matchBrackets: true,
+                autoCloseBrackets: true,
+                styleActiveLine: true,
+                extraKeys: {
+                    "Ctrl-Space": function(cm) {
+                        cm.showHint({completeSingle: false});
+                    }
+                }
+            });
+            
+            // Настраиваем автодополнение
+            editor.setOption("hintOptions", {
+                completeSingle: false
+            });
+            
+            // Сохраняем ссылку на редактор
+            window.pythonEditor = editor;
+            
+            // Обновляем значение textarea при изменении в редакторе
+            editor.on('change', function() {
+                textarea.value = editor.getValue();
+            });
+            
+            // Обновляем редактор при отправке формы
+            const getFixesButton = document.querySelector('button[onclick*="getFixes"]');
+            const runCodeButton = document.querySelector('button[onclick*="runCode"]');
+            
+            if (getFixesButton) {
+                getFixesButton.addEventListener('click', function() {
+                    textarea.value = editor.getValue();
+                });
+            }
+            
+            if (runCodeButton) {
+                runCodeButton.addEventListener('click', function() {
+                    textarea.value = editor.getValue();
+                });
+            }
+            
+            // Обрабатываем изменение темы
+            const themeToggle = document.querySelector('.theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const isDarkMode = document.body.classList.contains('dark-mode');
+                    editor.setOption('theme', isDarkMode ? 'dracula' : 'default');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
